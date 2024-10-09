@@ -1,4 +1,4 @@
-#!/home/lucas/git-repos/python-scrap/venv/bin/python3
+#!/home/lucas/git-repos/python-scrap/venv/bin/python3.11
 
 import sys
 import json

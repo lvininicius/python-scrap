@@ -1,25 +1,27 @@
-import sys,os
-sys.path.append(os.path.dirname(__file__))
-sys.path.append("./venv/lib/python3.11/site-packages/scrapy/templates/project/module")
-sys.path.append("items.py")
-from scrapy import Spider
-from items import MovieItem, MovieItemLoader
+import scrapy
 
-class AdoroCinemaSpider(Spider):
-    name = 'adorocinema'
-    start_urls = ['https://www.adorocinema.com/filmes/melhores/']
+class TerabyteShopSpider(scrapy.Spider):
+    name = 'terabyteshop_spider'
+    start_urls = ['https://www.terabyteshop.com.br/busca?str=RTX+4060']
+
+    custom_settings = {
+        'DOWNLOAD_DELAY': 10,
+        'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36',
+        'LOG_LEVEL': 'DEBUG',
+        'DOWNLOADER_MIDDLEWARES': {
+            'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': 110,
+        },
+        'HTTP_PROXY': 'http://192.168.1.104:8080',  # Defina seu proxy aqui
+        'RETRY_ENABLED': True,
+        'RETRY_TIMES': 5,
+        'RETRY_HTTP_CODES': [403, 500, 502, 503, 504],
+    }
+
+    def start_requests(self):
+        for url in self.start_urls:
+            yield scrapy.Request(url=url, callback=self.parse)
 
     def parse(self, response):
-        movies = response.xpath("//div[contains(@class,'card-list')]")
-        for movie in movies:
-            title = movie.css("a.meta-title-link::text").get()
-            duration = movie.css("div.meta-body-item.meta-body-info::text").get().replace("\n", "")
-            original_title = movie.xpath("div[1]//div[@class='meta-body-item']/span[2]/text()").getall()[-1]
-            
-
-            il=MovieItemLoader(item=MovieItem(), selector=movies)
-            il.add_value("title",title)
-            il.add_value("duration",duration)
-            il.add_value("original_title",original_title)
-
-            yield il.load_item()
+        for product in response.css('div.product-item'):
+            product_name = product.css('.prod-name::text').get().strip()
+            yield {'nome_placa': product_name}
